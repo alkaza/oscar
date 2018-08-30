@@ -1,0 +1,19 @@
+<launch>
+  <!-- LIDAR nodes -->
+  <node pkg="urg_node" type="urg_node" name="lidar_front">
+    <param name="ip_address" value="192.168.2.15"/>
+    <remap from="scan" to="scan_front"/>
+  </node>
+  <node pkg="urg_node" type="urg_node" name="lidar_back">
+    <param name="ip_address" value="192.168.3.15"/>
+    <remap from="scan" to="scan_back"/>
+  </node>
+
+  <!-- VESC driver node -->
+  <node pkg="vesc_driver" type="vesc_driver_node" name="vesc_driver">
+    <param name="port" value="/dev/vesc"/>
+  </node>
+
+  <!-- Keyboard control node -->
+  <node pkg="oscar" name="keyboard_control" type="keyboard_control.py" output="screen"/>
+</launch>
