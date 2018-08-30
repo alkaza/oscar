@@ -14,7 +14,7 @@ from cv_bridge import CvBridge, CvBridgeError
 
 prev_error = 0.0
 servo = 0.5
-speed = 0
+speed = 1000
 kp = 1.0
 kd = 0
 
@@ -26,15 +26,22 @@ bridge = CvBridge()
 
 def valMap(val, in_min, in_max, out_min, out_max):
 	return (val - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
-	
+
+# PD control - not necessary	
 def control(error):
 	global prev_error
-	error2 = (abs(error))*error / 36
+	error2 = (abs(error)**0.5)*error / 13
 	angle = (kp * error2 + kd * (-prev_error + error))
 	if (angle > 25): angle = 25
 	elif (angle < -25): angle = -25
 	prev_error = error
-	servo = valMap(angle, -25.0, 25.0, 0.0, 1.0)
+	servo = valMap(angle, -25.0, 25.0, 0.0, 1.0) # change offset limits and test
+
+	if servo <= 0.8 and servo >= 0.2 : return servo
+	elif servo > 0.8 : return 0.8
+	else : return 0.2
+
+
 	return servo
 
 import lane_track.imageop as iop
@@ -82,19 +89,19 @@ def lane_detect(cv_image):
 	# OpenCV callback
 
 	# Chaewon
-#	result, error, binary_warp, color_warp = pipe.advanced_lane_detection_pipeline(cv_image)
-#	cv2.imshow('1', result)
+	result, error, binary_warp, color_warp = pipe.advanced_lane_detection_pipeline(cv_image)
+	cv2.imshow('1', result)
 #	cv2.imshow('2', binary_warp)
 #	cv2.imshow('3', color_warp)
 	# End Chaewon
-#	cv2.waitKey(1)
+	cv2.waitKey(1)
 	
 #	try:
 #		image_pub.publish(bridge.cv2_to_imgmsg(cv_image, "bgr8"))
 #	except CvBridgeError as e:
 #		print(e)
 	
-	return error
+	return error #offset
 
 def callback(data):
 	try:
@@ -106,6 +113,8 @@ def callback(data):
 	print("error: " + str(error))
 	servo = control(error)
 	print("servo: " + str(servo))
+	print("speed: " + str(speed))
+	print()
 
 	speed_pub.publish(speed)
 	servo_pub.publish(servo)
