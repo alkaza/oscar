@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+
+<launch>
+  <!-- ZED node -->
+  <include file="$(find zed_wrapper)/launch/zed.launch"/>
+
+  <!-- LIDAR nodes -->
+<!--
+  <node pkg="urg_node" type="urg_node" name="lidar">
+    <param name="ip_address" value="192.168.2.15"/>
+  </node>
+-->
+
+  <!-- Lane Line Detection -->
+  <node pkg="oscar" type="lane_detect.py" name="lane_detect" output="screen"/>
+
+  <!-- VESC nodes -->
+  <rosparam>
+    speed_to_erpm_gain: 4614
+    speed_to_erpm_offset: 0.0
+    steering_angle_to_servo_gain: -1.2135
+    steering_angle_to_servo_offset: 0.5304
+    wheelbase: .25
+    vesc_to_odom/publish_tf: false
+    vesc_driver/port: /dev/vesc
+  </rosparam>
+  <node pkg="vesc_driver" type="vesc_driver_node" name="vesc_driver"/>
+<!--
+  <node pkg="vesc_ackermann" type="vesc_to_odom_node" name="vesc_to_odom"/>
+-->
+</launch>

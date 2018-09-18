@@ -5,13 +5,9 @@ import math
 from sensor_msgs.msg import LaserScan
 from std_msgs.msg import Float64
 
-desired_trajectory = 1.2
-theta = 50
-prev_error = 0.0
-speed = 2000
-servo = 0.5
-kp = 15.0
-kd = 0.09
+theta = 90
+speed = 1000
+servo = 0.54
 
 speed_pub = rospy.Publisher('/commands/motor/speed', Float64, queue_size=1)
 servo_pub = rospy.Publisher('/commands/servo/position', Float64, queue_size=1)
@@ -35,38 +31,15 @@ def getRange(data,theta):
 	elif(dist > data.range_max): return data.range_max
 	else: return dist
 
-def distFinder(data, theta):
-	a = getRange(data,theta)
-	b = getRange(data,0)
-	swing = math.radians(theta)
-	
-	alpha = math.atan2(a * math.cos(swing) - b, a * math.sin(swing))
-	AB = b * math.cos(alpha)
-	AC = 1
-	CD = AB + AC * math.sin(alpha)
-	error = CD - desired_trajectory
-	return error
-
 def obstFinder(data, theta):
-	a = getRange(data,90)
-	if(a < 0.5): speed = 0
-	else: speed = 2000
+	a = getRange(data, theta)
+	if(a < 0.6): speed = 0
+	else: speed = 1000
 	return speed
-
-def control(error):
-	global prev_error
-	servo = (kp * error + kd * (prev_error - error))/100
-	prev_error = error
-	return servo
 
 def callback(data):
 	speed = obstFinder(data, theta)
 	print("speed: " + str(speed))
-#	error = distFinder(data, theta)
-#	print("error: " + str(error))
-#	servo = control(error)
-#	print("servo: " + str(servo))
-
 	speed_pub.publish(speed)
 	servo_pub.publish(servo)
 	

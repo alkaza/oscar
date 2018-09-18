@@ -13,10 +13,12 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 
 prev_error = 0.0
+integral = 0.0
 servo = 0.5
 speed = 1000
 kp = 1.0
-kd = 0
+ki = 0.0
+kd = 0.0
 
 speed_pub = rospy.Publisher('/commands/motor/speed', Float64, queue_size=1)
 servo_pub = rospy.Publisher('/commands/servo/position', Float64, queue_size=1)
@@ -27,20 +29,30 @@ bridge = CvBridge()
 def valMap(val, in_min, in_max, out_min, out_max):
 	return (val - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 
-# PD control - not necessary	
 def control(error):
 	global prev_error
+	global integral
+
+#	integral = integral + error
+#	if (error == 0.0): integral = 0.0 
+#	if (abs(integral) >= 100.0): integral = 0.0
+
 	error2 = (abs(error)**0.5)*error / 13
-	angle = (kp * error2 + kd * (-prev_error + error))
+	angle = kp * error2 + kd * (-prev_error + error)
+
+#	derivative = error - prev_error
+	prev_error = error
+
+#	angle = kp * error + ki * integral + kd * derivative
+
 	if (angle > 25): angle = 25
 	elif (angle < -25): angle = -25
-	prev_error = error
-	servo = valMap(angle, -25.0, 25.0, 0.0, 1.0) # change offset limits and test
+
+	servo = valMap(angle, -25.0, 25.0, 0.0, 1.0) # map offset to servo
 
 	if servo <= 0.8 and servo >= 0.2 : return servo
 	elif servo > 0.8 : return 0.8
 	else : return 0.2
-
 
 	return servo
 
@@ -70,7 +82,7 @@ def lane_detect(cv_image):
 	#plt.pause(0.0001)
 		
 	#cv2.imshow(combined_binary, cmap='gray')
-	""" yecho """
+	# YeCho 
 	# Original Image
 	#cv2.imshow('Original', cv_image)
 	
@@ -89,17 +101,20 @@ def lane_detect(cv_image):
 	# OpenCV callback
 
 	# Chaewon
-	result, error, binary_warp, color_warp = pipe.advanced_lane_detection_pipeline(cv_image)
+	verbose = False
+	result, error, binary_warp, color_warp = pipe.advanced_lane_detection_pipeline(cv_image, verbose)
+	#if verbose:
 	cv2.imshow('1', result)
-#	cv2.imshow('2', binary_warp)
-#	cv2.imshow('3', color_warp)
+	#error = pipe.advanced_lane_detection_pipeline_mute(cv_image)
+	cv2.imshow('2', binary_warp)
+	cv2.imshow('3', color_warp)
 	# End Chaewon
 	cv2.waitKey(1)
 	
-#	try:
-#		image_pub.publish(bridge.cv2_to_imgmsg(cv_image, "bgr8"))
-#	except CvBridgeError as e:
-#		print(e)
+	try:
+		image_pub.publish(bridge.cv2_to_imgmsg(result, "bgr8"))
+	except CvBridgeError as e:
+		print(e)
 	
 	return error #offset
 
@@ -122,5 +137,5 @@ def callback(data):
 if __name__ == '__main__':
 	print("Lane Line Detection")
 	rospy.init_node('lane_detect',anonymous = True)
-	rospy.Subscriber('/zed/left/image_rect_color', Image, callback)
+	rospy.Subscriber('/left/image_rect_color', Image, callback)
 	rospy.spin()

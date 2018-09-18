@@ -9,9 +9,9 @@ desired_trajectory = 1.2
 theta = 50
 prev_error = 0.0
 servo = 0.5
-speed = 500
-kp = 14.0 * 2
-kd = 30 * 2
+speed = 1000
+kp = 1.0
+kd = 0.5
 
 speed_pub = rospy.Publisher('/commands/motor/speed', Float64, queue_size=1)
 servo_pub = rospy.Publisher('/commands/servo/position', Float64, queue_size=1)

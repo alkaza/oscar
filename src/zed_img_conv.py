@@ -24,10 +24,6 @@ class image_converter:
     except CvBridgeError as e:
       print(e)
 
-    (rows,cols,channels) = cv_image.shape
-    if cols > 60 and rows > 60 :
-      cv2.circle(cv_image, (50,50), 10, 255)
-
     cv2.imshow("Image window", cv_image)
     cv2.waitKey(3)
 
